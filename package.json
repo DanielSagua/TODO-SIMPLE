@@ -1,0 +1,22 @@
+{
+  "name": "todo-simple-multiuser",
+  "version": "1.0.1",
+  "description": "App interna simple tipo To-Do (multiusuario) con proyectos. Node.js + Express + SQL Server + Bootstrap 5.3 + JS.",
+  "main": "src/app.js",
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "start": "node src/app.js",
+    "seed:admin": "node scripts/seed-admin.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.17.3",
+    "luxon": "^3.5.0",
+    "mssql": "^10.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
