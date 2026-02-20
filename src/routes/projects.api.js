@@ -98,6 +98,36 @@ router.get('/projects/:id/members', requireAuth, async (req, res) => {
   }
 });
 
+// router.post('/projects/:id/members', requireAuth, async (req, res) => {
+//   try {
+//     const id_project = parseInt(req.params.id, 10);
+//     const project = await getProjectForUser(id_project, req.session.user.id_user);
+//     if (!project) return res.status(404).json({ ok: false, message: 'Proyecto no encontrado' });
+
+//     const ownerOk = project.owner_user_id === req.session.user.id_user;
+//     const adminOk = req.session.user.role === 'Admin';
+//     if (!ownerOk && !adminOk) return res.status(403).json({ ok: false, message: 'No autorizado' });
+
+//     const { email } = req.body || {};
+//     if (!email) return res.status(400).json({ ok: false, message: 'Email requerido' });
+
+//     const user = await findUserBasicByEmail(String(email).trim());
+//     if (!user) return res.status(404).json({ ok: false, message: 'Usuario no encontrado' });
+//     if (!user.activo) return res.status(400).json({ ok: false, message: 'Usuario desactivado' });
+
+//     await addMemberByUserId(id_project, user.id_user, 'Member');
+//     res.json({ ok: true });
+
+//     if (await isMember(id_project, user.id_user)) {
+//       return res.status(409).json({ ok: false, message: 'Ese usuario ya pertenece al proyecto' });
+//     }
+
+//   } catch (e) {
+//     console.error(e);
+//     res.status(500).json({ ok: false, message: 'Error al agregar miembro' });
+//   }
+// });
+
 router.post('/projects/:id/members', requireAuth, async (req, res) => {
   try {
     const id_project = parseInt(req.params.id, 10);
@@ -115,18 +145,23 @@ router.post('/projects/:id/members', requireAuth, async (req, res) => {
     if (!user) return res.status(404).json({ ok: false, message: 'Usuario no encontrado' });
     if (!user.activo) return res.status(400).json({ ok: false, message: 'Usuario desactivado' });
 
-    await addMemberByUserId(id_project, user.id_user, 'Member');
-    res.json({ ok: true });
-
+    // validar duplicado
     if (await isMember(id_project, user.id_user)) {
       return res.status(409).json({ ok: false, message: 'Ese usuario ya pertenece al proyecto' });
     }
 
+    // insertar
+    await addMemberByUserId(id_project, user.id_user, 'Member');
+
+    // responder una sola vez
+    return res.json({ ok: true });
+
   } catch (e) {
     console.error(e);
-    res.status(500).json({ ok: false, message: 'Error al agregar miembro' });
+    return res.status(500).json({ ok: false, message: 'Error al agregar miembro' });
   }
 });
+
 
 router.delete('/projects/:id/members/:userId', requireAuth, async (req, res) => {
   try {

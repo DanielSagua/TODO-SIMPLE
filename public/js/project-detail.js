@@ -38,6 +38,32 @@
 
   function showSuggestions(users) {
     if (!window.escapeHtml) { setTimeout(() => showSuggestions(users), 30); return; }
+    function showSuggestions(users) {
+      if (!window.escapeHtml) { setTimeout(() => showSuggestions(users), 30); return; }
+
+      // ✅ filtrar usuarios que ya son miembros del proyecto
+      const memberIds = new Set((members || []).map(m => String(m.id_user)));
+      const filtered = (users || []).filter(u => !memberIds.has(String(u.id_user)));
+
+      if (!filtered.length) return hideSuggestions();
+
+      memberSuggestions.innerHTML = filtered.map(u => `
+    <button type="button" class="list-group-item list-group-item-action" data-email="${escapeHtml(u.correo)}">
+      <div class="fw-semibold">${escapeHtml(u.nombre)}</div>
+      <div class="small text-muted">${escapeHtml(u.correo)}</div>
+    </button>
+  `).join('');
+
+      memberSuggestions.classList.remove('d-none');
+
+      memberSuggestions.querySelectorAll('button[data-email]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          memberEmail.value = btn.dataset.email;
+          hideSuggestions();
+          memberEmail.focus();
+        });
+      });
+    }
 
     if (!users.length) return hideSuggestions();
 
@@ -322,6 +348,8 @@
     if (!email.includes('@')) return showMemberError('Email inválido');
 
     btnAddMember.disabled = true;
+    hideSuggestions();
+
     try {
       await apiFetch(`/api/projects/${projectId}/members`, { method: 'POST', body: { email } });
       memberEmail.value = '';
@@ -361,6 +389,23 @@
       }
     }, 250);
   });
+
+  memberEmail.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+
+    // Si hay sugerencias visibles, toma la primera
+    if (!memberSuggestions.classList.contains('d-none')) {
+      const first = memberSuggestions.querySelector('button[data-email]');
+      if (first) {
+        memberEmail.value = first.dataset.email;
+        hideSuggestions();
+      }
+    }
+
+    await addMember();
+  });
+
 
   // ocultar al hacer click afuera
   document.addEventListener('click', (e) => {
